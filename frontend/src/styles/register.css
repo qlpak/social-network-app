@@ -1,0 +1,114 @@
+.register-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #6dd5ed, #2193b0);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.register-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.register-form {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 360px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.register-field {
+  margin-bottom: 1rem;
+}
+
+.register-label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  color: #333333;
+  font-size: 0.9rem;
+}
+
+.register-input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 0.4rem;
+  outline: none;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+  font-size: 0.9rem;
+  color: #000;
+}
+
+.register-input:focus {
+  border-color: #6dd5ed;
+  box-shadow: 0 0 0 2px rgba(109, 213, 237, 0.3);
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+.register-button {
+  width: 100%;
+  padding: 0.6rem;
+  background: #6dd5ed;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    transform 0.2s;
+}
+
+.register-button:hover {
+  background: #2193b0;
+  transform: translateY(-2px);
+}
+
+.register-message {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: 0.4rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.register-message.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.register-message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
