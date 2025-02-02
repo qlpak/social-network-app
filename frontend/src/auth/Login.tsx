@@ -2,10 +2,12 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import "../styles/login.css";
 
 const Login = () => {
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const initialValues = {
     email: "",
@@ -25,7 +27,11 @@ const Login = () => {
         "http://localhost:3000/api/auth/login",
         values
       );
-      setMessage("Login successful! Token: " + response.data.token);
+      const token = response.data.token;
+
+      localStorage.setItem("token", token);
+      setMessage("Login successful! Redirecting...");
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error: any) {
       setMessage(error.response?.data?.error || "Something went wrong!");
     }

@@ -16,9 +16,16 @@ router.post("/register", async (req, res) => {
       [firstName, lastName, username, email, hashedPassword]
     );
 
+    const user = result.rows[0];
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "99999999999999h",
+    });
+
     res.status(201).json({
       message: "User registered successfully",
-      user: result.rows[0],
+      user,
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -49,7 +56,7 @@ router.post("/login", async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ message: "Login successful", token, user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Something went wrong" });

@@ -4,10 +4,12 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import "../styles/register.css";
 
 const Register = () => {
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const initialValues = {
     firstName: "",
@@ -38,7 +40,8 @@ const Register = () => {
   const handleSubmit = async (values: typeof initialValues) => {
     try {
       await axios.post("http://localhost:3000/api/auth/register", values);
-      setMessage("Registration successful! Please login.");
+      setMessage("Registration successful! Redirecting to login...");
+      setTimeout(() => router.push("/auth/login"), 1500);
     } catch (error: any) {
       setMessage(error.response?.data?.error || "Something went wrong!");
     }
@@ -53,7 +56,6 @@ const Register = () => {
         onSubmit={handleSubmit}
       >
         <Form className="register-form">
-          {/* First Name */}
           <div className="register-field">
             <label htmlFor="firstName" className="register-label">
               First Name
@@ -67,7 +69,6 @@ const Register = () => {
             <ErrorMessage name="firstName" component="div" className="error" />
           </div>
 
-          {/* Last Name */}
           <div className="register-field">
             <label htmlFor="lastName" className="register-label">
               Last Name
@@ -81,7 +82,6 @@ const Register = () => {
             <ErrorMessage name="lastName" component="div" className="error" />
           </div>
 
-          {/* Username */}
           <div className="register-field">
             <label htmlFor="username" className="register-label">
               Username
@@ -95,7 +95,6 @@ const Register = () => {
             <ErrorMessage name="username" component="div" className="error" />
           </div>
 
-          {/* Email */}
           <div className="register-field">
             <label htmlFor="email" className="register-label">
               Email
@@ -109,7 +108,6 @@ const Register = () => {
             <ErrorMessage name="email" component="div" className="error" />
           </div>
 
-          {/* Password */}
           <div className="register-field">
             <label htmlFor="password" className="register-label">
               Password
@@ -123,7 +121,6 @@ const Register = () => {
             <ErrorMessage name="password" component="div" className="error" />
           </div>
 
-          {/* Submit Button */}
           <button type="submit" className="register-button">
             Register
           </button>
