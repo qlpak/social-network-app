@@ -1,14 +1,18 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import http from "http";
 import authRoutes from "./routes/auth.js";
 import pool from "./config/database.js";
 import profileRoutes from "./routes/profile.js";
 import friendsRoutes from "./routes/friends.js";
+import { setupSocket } from "../socket.js";
+import messagesRoutes from "./routes/messages.js";
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 
 app.use("/uploads", express.static("uploads"));
 
@@ -34,21 +38,22 @@ app.options("*", (req, res) => {
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api/profile", profileRoutes);
-
 app.use("/api/friends", friendsRoutes);
+app.use("/api/messages", messagesRoutes);
+
+setupSocket(server);
 
 pool.query("SELECT NOW()", (err, res) => {
   if (err) {
     console.error("Error connecting to the database:", err);
   } else {
-    console.log("Postgres database connected. current time:", res.rows[0].now);
+    console.log("Postgres database connected. Current time:", res.rows[0].now);
   }
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

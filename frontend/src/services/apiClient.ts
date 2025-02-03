@@ -59,3 +59,21 @@ export const rejectFriendRequest = async (requestId: number) => {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
 };
+
+export const getMessages = async (userId: number) => {
+  return await axios.get(`http://localhost:3000/api/messages/${userId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    withCredentials: true,
+  });
+};
+
+export const sendMessage = async (receiver_id: number, content: string) => {
+  return await axios.post(
+    "http://localhost:3000/api/messages",
+    { receiver_id, content },
+    {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      withCredentials: true,
+    }
+  );
+};
