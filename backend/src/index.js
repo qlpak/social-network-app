@@ -8,6 +8,7 @@ import profileRoutes from "./routes/profile.js";
 import friendsRoutes from "./routes/friends.js";
 import { setupSocket } from "../socket.js";
 import messagesRoutes from "./routes/messages.js";
+import postsRoutes from "./routes/posts.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/friends", friendsRoutes);
 app.use("/api/messages", messagesRoutes);
+app.use("/api/posts", postsRoutes);
 
 setupSocket(server);
 

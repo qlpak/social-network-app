@@ -1,4 +1,5 @@
 import axios from "axios";
+import { number } from "yup";
 
 const apiClient = axios.create({
   baseURL: "http://localhost:3000",
@@ -76,4 +77,79 @@ export const sendMessage = async (receiver_id: number, content: string) => {
       withCredentials: true,
     }
   );
+};
+
+const API_URL_POSTS = "http://localhost:3000/api/posts";
+
+export const getPosts = async () => {
+  const response = await axios.get(API_URL_POSTS);
+  return response.data;
+};
+
+export const createPost = async (
+  userId: number,
+  content: string,
+  imageUrl: string
+) => {
+  const response = await axios.post(API_URL_POSTS, {
+    userId,
+    content,
+    imageUrl,
+  });
+  return response.data;
+};
+
+export const updatePost = async (
+  postId: number,
+  userId: number,
+  newContent: string
+) => {
+  const response = await axios.put(`${API_URL_POSTS}/${postId}`, {
+    userId,
+    content: newContent,
+  });
+  return response.data;
+};
+
+export const deletePost = async (postId: number, userId: number) => {
+  await axios.delete(`${API_URL_POSTS}/${postId}`, { data: { userId } });
+};
+
+export const addComment = async (
+  postId: number,
+  userId: number,
+  content: string
+) => {
+  const response = await axios.post(`${API_URL_POSTS}/${postId}/comments`, {
+    userId,
+    content,
+  });
+  return response.data;
+};
+
+export const getComments = async (postId: number) => {
+  const response = await axios.get(`${API_URL_POSTS}/${postId}/comments`);
+  return response.data;
+};
+
+export const likePost = async (postId: number, userId: number) => {
+  await axios.post(`${API_URL_POSTS}/${postId}/like`, { userId });
+};
+
+export const unlikePost = async (postId: number, userId: number) => {
+  await axios.delete(`${API_URL_POSTS}/${postId}/unlike`, { data: { userId } });
+};
+
+export const getPostLikes = async (postId: number) => {
+  const response = await axios.get(`${API_URL_POSTS}/${postId}/likes`);
+  return response.data.likes;
+};
+
+export const tagUserInPost = async (postId: number, userId: number) => {
+  await axios.post(`${API_URL_POSTS}/${postId}/tag`, { userId });
+};
+
+export const getTagsForPost = async (postId: number) => {
+  const response = await axios.get(`${API_URL_POSTS}/${postId}/tags`);
+  return response.data;
 };

@@ -14,7 +14,7 @@ const setupSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-      console.log(`User connected: ${socket.id}`);
+      //   console.log(`User connected: ${socket.id}`);
 
       socket.on("joinRoom", (room) => {
         socket.join(room);
@@ -27,7 +27,7 @@ const setupSocket = (server) => {
       });
 
       socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
+        // console.log("User disconnected:", socket.id);
       });
     });
 
