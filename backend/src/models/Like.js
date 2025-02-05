@@ -36,3 +36,26 @@ export const hasUserLikedPost = async (postId, userId) => {
   );
   return result.rows[0].count > 0;
 };
+
+export const toggleLike = async (postId, userId) => {
+  if (!userId) throw new Error("User ID is required");
+
+  const existingLike = await pool.query(
+    "SELECT * FROM likes WHERE post_id = $1 AND user_id = $2",
+    [postId, userId]
+  );
+
+  if (existingLike.rows.length > 0) {
+    await pool.query("DELETE FROM likes WHERE post_id = $1 AND user_id = $2", [
+      postId,
+      userId,
+    ]);
+    return { liked: false };
+  } else {
+    await pool.query("INSERT INTO likes (post_id, user_id) VALUES ($1, $2)", [
+      postId,
+      userId,
+    ]);
+    return { liked: true };
+  }
+};

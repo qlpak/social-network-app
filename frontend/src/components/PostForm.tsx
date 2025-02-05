@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { usePostContext } from "../context/PostContext";
 
 const PostForm = () => {
   const { dispatch } = usePostContext();
-  const userId = 1;
+  const [userId, setUserId] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserId(Number(sessionStorage.getItem("userId")));
+    }
+  }, []);
   return (
     <Formik
       initialValues={{ content: "", imageUrl: "" }}

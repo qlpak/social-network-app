@@ -10,25 +10,17 @@ const PostsList: React.FC = () => {
     const fetchPosts = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/posts");
-        if (!response.ok) throw new Error("Failed to fetch posts");
+        if (!response.ok) throw new Error("Błąd pobierania postów");
 
         const data = await response.json();
-        const updatedPosts = data.map(
-          (post: { likes: any; dislikes: any }) => ({
-            ...post,
-            likes: post.likes || 0,
-            dislikes: post.dislikes || 0,
-          })
-        );
-
-        dispatch({ type: "SET_POSTS", payload: updatedPosts });
+        dispatch({ type: "SET_POSTS", payload: data });
       } catch (error) {
-        console.error("Error fetching posts:", error);
+        console.error("Błąd pobierania postów:", error);
       }
     };
 
     fetchPosts();
-  }, [dispatch]);
+  }, [dispatch, posts]);
 
   return (
     <div className="space-y-4">

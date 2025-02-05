@@ -37,7 +37,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const [newContent, setNewContent] = useState(post.content);
   const [hasLiked, setHasLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
-  const currentUserId = 1;
+  const currentUserId = Number(sessionStorage.getItem("userId"));
 
   useEffect(() => {
     const fetchLikeStatus = async () => {
@@ -55,39 +55,59 @@ const Post: React.FC<PostProps> = ({ post }) => {
     fetchLikeStatus();
   }, [post.id]);
 
-  const handleLikeToggle = async (type: "like" | "dislike") => {
+  const handleLikeToggle = async () => {
+    const currentUserId = Number(sessionStorage.getItem("userId"));
+
+    if (!currentUserId) {
+      alert("Musisz być zalogowany, aby polubić post!");
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:3000/api/posts/${post.id}/like`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: currentUserId, type }),
+          body: JSON.stringify({ userId: currentUserId }),
         }
       );
 
-      if (!response.ok) throw new Error("Failed to update like status");
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Błąd: ${errorData.error || "Nie udało się zmienić lajka"}`);
+        return;
+      }
 
-      setHasLiked(type === "like");
-      setLikeCount((prev) =>
-        type === "like" ? prev + 1 : Math.max(prev - 1, 0)
-      );
+      const data = await response.json();
+      setHasLiked(data.liked);
+      setLikeCount((prev) => (data.liked ? prev + 1 : Math.max(prev - 1, 0)));
     } catch (err) {
-      console.error("Error toggling like:", err);
+      console.error("Błąd togglowania lajka:", err);
     }
   };
 
   const handleDelete = async () => {
     if (post.user_id !== currentUserId) return;
+
     try {
-      await fetch(`http://localhost:3000/api/posts/${post.id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId }),
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/posts/${post.id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUserId }),
+        }
+      );
+
+      if (response.status === 403) {
+        alert("Nie masz uprawnień do usunięcia tego posta!");
+        return;
+      }
+
       dispatch({ type: "DELETE_POST", payload: post.id });
     } catch (err) {
-      console.error("Error deleting post:", err);
+      console.error("Błąd usuwania posta:", err);
     }
   };
 
@@ -102,19 +122,18 @@ const Post: React.FC<PostProps> = ({ post }) => {
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Błąd API:", errorData);
-        alert(`error: ${errorData.error || "cant update post.."}`);
+      if (response.status === 403) {
+        alert("Nie masz uprawnień do edycji tego posta!"); // 🚨 Powiadomienie dla użytkownika
         return;
       }
+
+      if (!response.ok) throw new Error("Błąd edycji posta");
 
       const updatedPost = await response.json();
       dispatch({ type: "UPDATE_POST", payload: updatedPost });
       setEditing(false);
     } catch (error) {
-      console.error("error editing post: ", error);
-      alert("server connection refused..");
+      console.error("Błąd podczas edycji posta:", error);
     }
   };
 
@@ -168,19 +187,11 @@ const Post: React.FC<PostProps> = ({ post }) => {
 
         <div className="flex space-x-4 mt-2">
           <IconButton
-            onClick={() => handleLikeToggle("like")}
+            onClick={handleLikeToggle}
             color={hasLiked ? "error" : "default"}
           >
-            <Favorite />
+            {hasLiked ? <Favorite /> : <FavoriteBorder />}
           </IconButton>
-
-          <IconButton
-            onClick={() => handleLikeToggle("dislike")}
-            color={!hasLiked ? "error" : "default"}
-          >
-            <FavoriteBorder />
-          </IconButton>
-
           <Typography variant="body2" sx={{ color: "#ccc" }}>
             {likeCount}
           </Typography>

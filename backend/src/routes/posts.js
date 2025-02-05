@@ -15,16 +15,16 @@ import {
 import { tagUserInPost, getTagsForPost } from "../models/Tag.js";
 import { getUserById } from "../models/User.js";
 import { getPostById } from "../models/Post.js";
+import { toggleLike } from "../models/Like.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
     const { userId, content, imageUrl } = req.body;
-    if (!userId || !content) {
-      return res
-        .status(400)
-        .json({ error: "User ID and content are required" });
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
     const post = await createPost(userId, content, imageUrl);
@@ -38,23 +38,10 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const posts = await getAllPosts();
-
-    const postsWithAuthors = await Promise.all(
-      posts.map(async (post) => {
-        const user = await getUserById(post.user_id);
-        const likes = await getPostLikes(post.id);
-        return {
-          ...post,
-          likes,
-          author: user ? `${user.first_name} ${user.last_name}` : "Unknown",
-        };
-      })
-    );
-
-    res.json(postsWithAuthors);
+    res.json(posts);
   } catch (error) {
     console.error("Error fetching posts:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -122,14 +109,19 @@ router.get("/:id/comments", async (req, res) => {
 });
 
 router.post("/:id/like", async (req, res) => {
-  const { userId, type } = req.body;
+  const { userId } = req.body;
 
-  if (!["like", "dislike"].includes(type)) {
-    return res.status(400).json({ error: "Invalid type" });
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
   }
 
-  await likePost(req.params.id, userId, type);
-  res.json({ message: `Post ${type}d successfully` });
+  try {
+    const result = await toggleLike(req.params.id, userId);
+    res.json({ liked: result.liked });
+  } catch (error) {
+    console.error("Error toggling like:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 router.delete("/:id/unlike", async (req, res) => {

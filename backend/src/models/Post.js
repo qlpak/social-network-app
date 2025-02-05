@@ -10,17 +10,21 @@ export const createPost = async (userId, content, imageUrl) => {
 export const getAllPosts = async () => {
   const result = await pool.query(
     `SELECT posts.*, 
+              users.first_name, users.last_name, 
               COUNT(DISTINCT likes.id) AS likes, 
-              COUNT(DISTINCT comments.id) AS comments,
-              ARRAY_AGG(DISTINCT tags.user_id) AS tagged_users
+              COUNT(DISTINCT comments.id) AS comments 
        FROM posts
+       JOIN users ON users.id = posts.user_id
        LEFT JOIN likes ON likes.post_id = posts.id
        LEFT JOIN comments ON comments.post_id = posts.id
-       LEFT JOIN tags ON tags.post_id = posts.id
-       GROUP BY posts.id
+       GROUP BY posts.id, users.first_name, users.last_name
        ORDER BY posts.created_at DESC`
   );
-  return result.rows;
+
+  return result.rows.map((post) => ({
+    ...post,
+    author: `${post.first_name} ${post.last_name}`,
+  }));
 };
 
 export const getPostById = async (postId) => {
