@@ -65,8 +65,15 @@ router.delete("/:id/unlike", async (req, res) => {
 });
 
 router.get("/:id/likes", async (req, res) => {
-  const likes = await getPostLikes(req.params.id);
-  res.json({ likes });
+  try {
+    console.log(`Received request for post likes: ${req.params.id}`);
+    const likes = await getPostLikes(req.params.id);
+    console.log(`Returning likes count: ${likes}`);
+    res.json({ likes: likes || 0 });
+  } catch (error) {
+    console.error("Error fetching likes:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.post("/:id/tag", async (req, res) => {

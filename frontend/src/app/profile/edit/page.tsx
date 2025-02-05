@@ -1,6 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Paper,
+  Avatar,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 const EditProfile = () => {
   const [firstName, setFirstName] = useState("");
@@ -8,11 +18,13 @@ const EditProfile = () => {
   const [bio, setBio] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const token = localStorage.getItem("token");
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) {
       setMessage("You need to log in first.");
       return;
@@ -34,81 +46,150 @@ const EditProfile = () => {
     });
 
     if (response.ok) {
-      const updatedUser = await response.json();
       setMessage("Profile updated successfully!");
       setProfileImage(null);
-      window.location.reload();
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          router.replace("/profile");
+        }
+      }, 1500);
     } else {
       setMessage("Something went wrong.");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-lg p-8 w-full max-w-md"
+    <Container
+      maxWidth="sm"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
       >
-        <div className="mb-4">
-          <label htmlFor="firstName" className="block font-bold mb-2">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="lastName" className="block font-bold mb-2">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="bio" className="block font-bold mb-2">
-            Bio
-          </label>
-          <textarea
-            id="bio"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-          ></textarea>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="profileImage" className="block font-bold mb-2">
-            Profile Image
-          </label>
-          <input
-            type="file"
-            id="profileImage"
-            onChange={(e) => {
-              if (e.target.files) {
-                setProfileImage(e.target.files[0]);
-              }
-            }}
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg"
+        <Paper
+          elevation={10}
+          sx={{
+            padding: 4,
+            borderRadius: 3,
+            textAlign: "center",
+            backgroundColor: "#1E293B",
+            color: "white",
+          }}
         >
-          Save Changes
-        </button>
-      </form>
-      {message && <p className="mt-4 text-green-500">{message}</p>}
-    </div>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Edit Profile
+          </Typography>
+          <Avatar
+            sx={{ width: 80, height: 80, margin: "0 auto", mb: 2 }}
+            src={
+              profileImage
+                ? URL.createObjectURL(profileImage)
+                : "/default-avatar.png"
+            }
+          />
+          <form onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              variant="outlined"
+              sx={{
+                mb: 2,
+                backgroundColor: "#334155",
+                borderRadius: 1,
+                input: { color: "white" },
+                label: { color: "#CBD5E1" },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              variant="outlined"
+              sx={{
+                mb: 2,
+                backgroundColor: "#334155",
+                borderRadius: 1,
+                input: { color: "white" },
+                label: { color: "#CBD5E1" },
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Bio"
+              multiline
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              variant="outlined"
+              sx={{
+                mb: 2,
+                backgroundColor: "#334155",
+                borderRadius: 1,
+                input: { color: "white" },
+                label: { color: "#CBD5E1" },
+              }}
+            />
+            <input
+              type="file"
+              id="profileImage"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setProfileImage(e.target.files[0]);
+                }
+              }}
+              style={{ display: "none" }}
+            />
+            <label htmlFor="profileImage">
+              <Button
+                component="span"
+                variant="contained"
+                sx={{ mb: 3, backgroundColor: "#3B82F6" }}
+              >
+                Upload Profile Image
+              </Button>
+            </label>
+            <motion.div whileHover={{ scale: 1.05 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{
+                  backgroundColor: "#16A34A",
+                  color: "white",
+                  padding: "10px",
+                  fontSize: "16px",
+                  borderRadius: "8px",
+                  "&:hover": { backgroundColor: "#15803D" },
+                }}
+              >
+                Save Changes
+              </Button>
+            </motion.div>
+          </form>
+          {message && (
+            <Typography
+              sx={{
+                mt: 3,
+                color: message.includes("successfully") ? "#4ADE80" : "#EF4444",
+              }}
+            >
+              {message}
+            </Typography>
+          )}
+        </Paper>
+      </motion.div>
+    </Container>
   );
 };
 

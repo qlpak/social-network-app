@@ -19,10 +19,15 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const currentUserId = 1;
 
   useEffect(() => {
-    fetch(`/api/posts/${post.id}/likes`)
-      .then((res) => res.json())
+    console.log(`Fetching likes for post ID: ${post.id}`);
+    fetch(`http://localhost:3000/api/posts/${post.id}/likes`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        setHasLiked(data.likes.includes(currentUserId));
+        console.log("Likes data:", data);
+        setHasLiked(data.likes > 0);
       })
       .catch((err) => console.error("Error fetching likes:", err));
   }, [post.id]);
