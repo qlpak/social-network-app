@@ -13,7 +13,7 @@ const Profile = () => {
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     const fetchProfile = async () => {

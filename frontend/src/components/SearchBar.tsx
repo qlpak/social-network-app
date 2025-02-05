@@ -33,15 +33,17 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         placeholder="First Name"
         value={filters.first_name}
         onChange={handleChange}
-        className="p-2 border rounded"
+        onKeyDown={(e) => e.key === "Enter" && onSearch(filters)}
+        className="p-2 border rounded bg-gray-800 text-white placeholder-gray-400"
       />
+
       <input
         type="text"
         name="last_name"
         placeholder="Last Name"
         value={filters.last_name}
         onChange={handleChange}
-        className="p-2 border rounded"
+        className="p-2 border rounded bg-gray-800 text-white placeholder-gray-400"
       />
       <input
         type="text"
@@ -49,7 +51,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         placeholder="City"
         value={filters.city}
         onChange={handleChange}
-        className="p-2 border rounded"
+        className="p-2 border rounded bg-gray-800 text-white placeholder-gray-400"
       />
       <input
         type="number"
@@ -57,11 +59,11 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         placeholder="Age"
         value={filters.age}
         onChange={handleChange}
-        className="p-2 border rounded"
+        className="p-2 border rounded bg-gray-800 text-white placeholder-gray-400"
       />
       <button
         onClick={() => onSearch(filters)}
-        className="p-2 bg-blue-500 text-white rounded"
+        className="p-2 border rounded bg-gray-800 text-white placeholder-gray-400"
       >
         Search
       </button>

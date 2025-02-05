@@ -38,8 +38,15 @@ const Login = () => {
         values
       );
       const token = response.data.token;
+      const user = response.data.user;
 
-      localStorage.setItem("token", token);
+      if (!user?.id) {
+        throw new Error("User ID is missing from response.");
+      }
+
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("userId", String(user.id));
+
       setMessage("Login successful! Redirecting...");
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error: any) {

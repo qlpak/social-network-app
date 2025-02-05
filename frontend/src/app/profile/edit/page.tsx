@@ -24,7 +24,7 @@ const EditProfile = () => {
     e.preventDefault();
 
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
     if (!token) {
       setMessage("You need to log in first.");
       return;

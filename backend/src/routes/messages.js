@@ -12,9 +12,9 @@ router.get("/:userId", authMiddleware, async (req, res) => {
   try {
     const messages = await pool.query(
       `SELECT * FROM messages 
-             WHERE (sender_id = $1 AND receiver_id = $2) 
-                OR (sender_id = $2 AND receiver_id = $1) 
-             ORDER BY created_at ASC`,
+         WHERE (sender_id = $1 AND receiver_id = $2) 
+         OR (sender_id = $2 AND receiver_id = $1) 
+         ORDER BY created_at ASC`,
       [userId, chatPartnerId]
     );
 
@@ -30,22 +30,35 @@ router.post("/", authMiddleware, async (req, res) => {
   const sender_id = req.user.id;
 
   try {
+    console.log(
+      "message revieced: ",
+      sender_id,
+      "to:",
+      receiver_id,
+      "conetn:",
+      content
+    );
+
     const newMessage = await pool.query(
       "INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING *",
       [sender_id, receiver_id, content]
     );
 
+    const chatRoom = `chat_${Math.min(sender_id, receiver_id)}_${Math.max(sender_id, receiver_id)}`;
+
+    console.log("emittig message: ", chatRoom);
+
     if (io) {
-      io.to(`chat_${receiver_id}`).emit("receiveMessage", newMessage.rows[0]);
-      console.log(`message sent to chat_${receiver_id}`);
+      io.to(chatRoom).emit("receiveMessage", newMessage.rows[0]);
+      console.log("message sen to tje room: ", chatRoom);
     } else {
-      console.error("error socket.io is not available!");
+      console.error("error, socket ionot available ");
     }
 
     res.status(201).json(newMessage.rows[0]);
   } catch (error) {
-    console.error("error sending message: ", error);
-    res.status(500).json({ error: "server error" });
+    console.error("error sendig message: ", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

@@ -14,20 +14,24 @@ const setupSocket = (server) => {
     });
 
     io.on("connection", (socket) => {
-      //   console.log(`User connected: ${socket.id}`);
+      console.log(`User connected: ${socket.id}`);
 
-      socket.on("joinRoom", (room) => {
-        socket.join(room);
-        console.log(`User joined room: ${room}`);
+      socket.on("joinRoom", ({ sender_id, receiver_id }) => {
+        if (!sender_id || !receiver_id) return;
+
+        const chatRoom = `chat_${Math.min(sender_id, receiver_id)}_${Math.max(sender_id, receiver_id)}`;
+        socket.join(chatRoom);
+        console.log(`User ${sender_id} joined room: ${chatRoom}`);
       });
 
       socket.on("sendMessage", (data) => {
-        console.log(`new message: ${data.content}`);
-        io.to(`chat_${data.receiver_id}`).emit("receiveMessage", data);
+        const chatRoom = `chat_${Math.min(data.sender_id, data.receiver_id)}_${Math.max(data.sender_id, data.receiver_id)}`;
+        console.log(`New message in ${chatRoom}: ${data.content}`);
+        io.to(chatRoom).emit("receiveMessage", data);
       });
 
       socket.on("disconnect", () => {
-        // console.log("User disconnected:", socket.id);
+        console.log("User disconnected:", socket.id);
       });
     });
 

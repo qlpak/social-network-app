@@ -30,7 +30,7 @@ export const sendFriendRequest = async (receiverId: number) => {
     `${API_URL}/request`,
     { receiver_id: receiverId },
     {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     }
   );
 };
@@ -38,7 +38,7 @@ export const sendFriendRequest = async (receiverId: number) => {
 export const getFriendRequests = async () => {
   return await axios.get("http://localhost:3000/api/friends/requests", {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
       "Content-Type": "application/json",
     },
     withCredentials: true,
@@ -50,20 +50,20 @@ export const acceptFriendRequest = async (requestId: number) => {
     `${API_URL}/accept/${requestId}`,
     {},
     {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     }
   );
 };
 
 export const rejectFriendRequest = async (requestId: number) => {
   return axios.delete(`${API_URL}/reject/${requestId}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
   });
 };
 
 export const getMessages = async (userId: number) => {
   return await axios.get(`http://localhost:3000/api/messages/${userId}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     withCredentials: true,
   });
 };
@@ -73,7 +73,7 @@ export const sendMessage = async (receiver_id: number, content: string) => {
     "http://localhost:3000/api/messages",
     { receiver_id, content },
     {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
       withCredentials: true,
     }
   );
