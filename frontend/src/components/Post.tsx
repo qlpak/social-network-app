@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePostContext } from "../context/PostContext";
 
 interface PostProps {
@@ -15,6 +15,43 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const { dispatch } = usePostContext();
   const [editing, setEditing] = useState(false);
   const [newContent, setNewContent] = useState(post.content);
+  const [hasLiked, setHasLiked] = useState(false);
+  const currentUserId = 1;
+
+  useEffect(() => {
+    fetch(`/api/posts/${post.id}/likes`)
+      .then((res) => res.json())
+      .then((data) => {
+        setHasLiked(data.likes.includes(currentUserId));
+      })
+      .catch((err) => console.error("Error fetching likes:", err));
+  }, [post.id]);
+
+  const handleLikeToggle = () => {
+    if (hasLiked) {
+      fetch(`/api/posts/${post.id}/unlike`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      })
+        .then(() => {
+          dispatch({ type: "LIKE_POST", payload: post.id });
+          setHasLiked(false);
+        })
+        .catch((err) => console.error("Error unliking post:", err));
+    } else {
+      fetch(`/api/posts/${post.id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      })
+        .then(() => {
+          dispatch({ type: "LIKE_POST", payload: post.id });
+          setHasLiked(true);
+        })
+        .catch((err) => console.error("Error liking post:", err));
+    }
+  };
 
   const handleSave = () => {
     dispatch({
@@ -49,7 +86,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
           </button>
         </>
       ) : (
-        <p>{post.content}</p>
+        <p>{post.content ? post.content : "Brak treści"}</p>
       )}
 
       {post.image_url && (
@@ -58,10 +95,10 @@ const Post: React.FC<PostProps> = ({ post }) => {
 
       <div className="flex space-x-4 mt-2">
         <button
-          onClick={() => dispatch({ type: "LIKE_POST", payload: post.id })}
-          className="p-2 bg-blue-500 text-white rounded"
+          onClick={handleLikeToggle}
+          className={`p-2 ${hasLiked ? "bg-red-500" : "bg-blue-500"} text-white rounded`}
         >
-          👍 Like ({post.likes})
+          👍 {hasLiked ? "Unlike" : "Like"} ({post.likes})
         </button>
         <button
           onClick={() => setEditing(!editing)}

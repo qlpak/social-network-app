@@ -48,6 +48,12 @@ router.get("/:id/comments", async (req, res) => {
 
 router.post("/:id/like", async (req, res) => {
   const { userId } = req.body;
+  const alreadyLiked = await hasUserLikedPost(req.params.id, userId);
+
+  if (alreadyLiked) {
+    return res.status(400).json({ error: "User already liked this post" });
+  }
+
   await likePost(req.params.id, userId);
   res.sendStatus(200);
 });

@@ -6,7 +6,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { getPosts } from "../services/apiClient"; // Sprawdź, czy import jest poprawny
+import { getPosts } from "../services/apiClient";
 
 interface Comment {
   id: number;
@@ -87,18 +87,13 @@ export const PostProvider = ({ children }: { children: ReactNode }) => {
         const processedPosts = fetchedPosts.map((post: Post) => ({
           ...post,
           comments: Array.isArray(post.comments) ? post.comments : [],
+          content: post.content || "Brak treści",
         }));
-
-        // console.log("posts after processing:", processedPosts);
-        dispatch({ type: "SET_POSTS", payload: processedPosts });
-
-        // console.log("posts after processing:", processedPosts);
         dispatch({ type: "SET_POSTS", payload: processedPosts });
       } catch (error) {
         console.error("error fetching posts:", error);
       }
     };
-
     fetchPosts();
   }, []);
 

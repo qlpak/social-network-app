@@ -6,12 +6,22 @@ import axios from "axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import "../styles/register.css";
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Paper,
+  Box,
+  Alert,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const initialValues = {
+  const initialValues: Record<string, string> = {
     firstName: "",
     lastName: "",
     username: "",
@@ -48,94 +58,117 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container">
-      <h1 className="register-title">Register</h1>
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
+    <Box
+      sx={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #0a1f44, #1e3a8a)",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
       >
-        <Form className="register-form">
-          <div className="register-field">
-            <label htmlFor="firstName" className="register-label">
-              First Name
-            </label>
-            <Field
-              type="text"
-              id="firstName"
-              name="firstName"
-              className="register-input"
-            />
-            <ErrorMessage name="firstName" component="div" className="error" />
-          </div>
-
-          <div className="register-field">
-            <label htmlFor="lastName" className="register-label">
-              Last Name
-            </label>
-            <Field
-              type="text"
-              id="lastName"
-              name="lastName"
-              className="register-input"
-            />
-            <ErrorMessage name="lastName" component="div" className="error" />
-          </div>
-
-          <div className="register-field">
-            <label htmlFor="username" className="register-label">
-              Username
-            </label>
-            <Field
-              type="text"
-              id="username"
-              name="username"
-              className="register-input"
-            />
-            <ErrorMessage name="username" component="div" className="error" />
-          </div>
-
-          <div className="register-field">
-            <label htmlFor="email" className="register-label">
-              Email
-            </label>
-            <Field
-              type="email"
-              id="email"
-              name="email"
-              className="register-input"
-            />
-            <ErrorMessage name="email" component="div" className="error" />
-          </div>
-
-          <div className="register-field">
-            <label htmlFor="password" className="register-label">
-              Password
-            </label>
-            <Field
-              type="password"
-              id="password"
-              name="password"
-              className="register-input"
-            />
-            <ErrorMessage name="password" component="div" className="error" />
-          </div>
-
-          <button type="submit" className="register-button">
-            Register
-          </button>
-        </Form>
-      </Formik>
-      {message && (
-        <div
-          className={`register-message ${
-            message.includes("successful") ? "success" : "error"
-          }`}
+        <Paper
+          elevation={12}
+          sx={{
+            padding: 5,
+            borderRadius: 4,
+            background: "rgba(30, 58, 138, 0.9)",
+            backdropFilter: "blur(12px)",
+            textAlign: "center",
+            boxShadow: "0px 0px 30px rgba(255, 255, 255, 0.2)",
+            width: "100%",
+            maxWidth: "420px",
+          }}
         >
-          {message}
-        </div>
-      )}
-    </div>
+          <Typography variant="h4" fontWeight="bold" color="white" gutterBottom>
+            Create Your Account
+          </Typography>
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ handleChange, handleBlur, values }) => (
+              <Form>
+                {Object.keys(initialValues).map((field, index) => (
+                  <Box mb={3} key={index}>
+                    <TextField
+                      fullWidth
+                      label={field.charAt(0).toUpperCase() + field.slice(1)}
+                      name={field}
+                      value={values[field]}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      variant="outlined"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "white",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#66bbff",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#0099ff",
+                          },
+                        },
+                        input: { color: "white" },
+                        label: { color: "white" },
+                      }}
+                    />
+                    <ErrorMessage name={field}>
+                      {(msg) => (
+                        <Typography
+                          sx={{ color: "#ff6666", fontSize: "14px", mt: 1 }}
+                        >
+                          {msg}
+                        </Typography>
+                      )}
+                    </ErrorMessage>
+                  </Box>
+                ))}
+
+                <motion.div whileHover={{ scale: 1.08 }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                      backgroundColor: "#00ccff",
+                      color: "white",
+                      padding: "12px",
+                      fontSize: "18px",
+                      borderRadius: "10px",
+                      boxShadow: "0px 5px 15px rgba(0, 204, 255, 0.5)",
+                      "&:hover": {
+                        backgroundColor: "#0099cc",
+                      },
+                    }}
+                  >
+                    Register
+                  </Button>
+                </motion.div>
+              </Form>
+            )}
+          </Formik>
+
+          {message && (
+            <Alert
+              severity={message.includes("successful") ? "success" : "error"}
+              sx={{ mt: 3 }}
+            >
+              {message}
+            </Alert>
+          )}
+        </Paper>
+      </motion.div>
+    </Box>
   );
 };
 
