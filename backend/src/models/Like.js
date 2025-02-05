@@ -1,9 +1,16 @@
 import pool from "../config/database.js";
 
-export const likePost = async (postId, userId) => {
+export const likePost = async (postId, userId, type) => {
+  if (!["like", "dislike"].includes(type)) {
+    throw new Error("Invalid type");
+  }
+
   await pool.query(
-    "INSERT INTO likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT (post_id, user_id) DO NOTHING",
-    [postId, userId]
+    `INSERT INTO likes (post_id, user_id, type)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (post_id, user_id)
+       DO UPDATE SET type = EXCLUDED.type`,
+    [postId, userId, type]
   );
 };
 

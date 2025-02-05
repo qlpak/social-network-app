@@ -55,24 +55,23 @@ const Post: React.FC<PostProps> = ({ post }) => {
     fetchLikeStatus();
   }, [post.id]);
 
-  const handleLikeToggle = async () => {
+  const handleLikeToggle = async (type: "like" | "dislike") => {
     try {
-      if (hasLiked) {
-        await fetch(`http://localhost:3000/api/posts/${post.id}/unlike`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: currentUserId }),
-        });
-        setLikeCount((prev) => Math.max(prev - 1, 0));
-      } else {
-        await fetch(`http://localhost:3000/api/posts/${post.id}/like`, {
+      const response = await fetch(
+        `http://localhost:3000/api/posts/${post.id}/like`,
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: currentUserId }),
-        });
-        setLikeCount((prev) => prev + 1);
-      }
-      setHasLiked(!hasLiked);
+          body: JSON.stringify({ userId: currentUserId, type }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update like status");
+
+      setHasLiked(type === "like");
+      setLikeCount((prev) =>
+        type === "like" ? prev + 1 : Math.max(prev - 1, 0)
+      );
     } catch (err) {
       console.error("Error toggling like:", err);
     }
@@ -92,11 +91,31 @@ const Post: React.FC<PostProps> = ({ post }) => {
     }
   };
 
-  const handleUpdate = () => {
-    if (post.user_id !== currentUserId) return;
-    const updatedPost = { ...post, content: newContent };
-    dispatch({ type: "UPDATE_POST", payload: updatedPost });
-    setEditing(false);
+  const handleUpdate = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/posts/${post.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUserId, content: newContent }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Błąd API:", errorData);
+        alert(`error: ${errorData.error || "cant update post.."}`);
+        return;
+      }
+
+      const updatedPost = await response.json();
+      dispatch({ type: "UPDATE_POST", payload: updatedPost });
+      setEditing(false);
+    } catch (error) {
+      console.error("error editing post: ", error);
+      alert("server connection refused..");
+    }
   };
 
   return (
@@ -149,11 +168,19 @@ const Post: React.FC<PostProps> = ({ post }) => {
 
         <div className="flex space-x-4 mt-2">
           <IconButton
-            onClick={handleLikeToggle}
+            onClick={() => handleLikeToggle("like")}
             color={hasLiked ? "error" : "default"}
           >
-            {hasLiked ? <Favorite /> : <FavoriteBorder />}
+            <Favorite />
           </IconButton>
+
+          <IconButton
+            onClick={() => handleLikeToggle("dislike")}
+            color={!hasLiked ? "error" : "default"}
+          >
+            <FavoriteBorder />
+          </IconButton>
+
           <Typography variant="body2" sx={{ color: "#ccc" }}>
             {likeCount}
           </Typography>

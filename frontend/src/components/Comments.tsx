@@ -43,19 +43,28 @@ const Comments: React.FC<CommentsProps> = ({ postId, comments = [] }) => {
   const handleAddComment = async () => {
     if (comment.trim() === "") return;
 
+    const currentUserId = Number(sessionStorage.getItem("userId"));
+    if (!currentUserId) {
+      alert("tou need to be logged in to add comment");
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:3000/api/posts/${postId}/comments`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: 1, content: comment }),
+          body: JSON.stringify({ userId: currentUserId, content: comment }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to add comment");
+      if (response.status === 403) {
+        alert("Nie możesz dodać komentarza!");
+        return;
       }
+
+      if (!response.ok) throw new Error("Failed to add comment");
 
       const newComment = await response.json();
       setComment("");

@@ -10,15 +10,23 @@ const PostsList: React.FC = () => {
     const fetchPosts = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/posts");
-        if (!response.ok) {
-          throw new Error("Failed to fetch posts");
-        }
+        if (!response.ok) throw new Error("Failed to fetch posts");
+
         const data = await response.json();
-        dispatch({ type: "SET_POSTS", payload: data });
+        const updatedPosts = data.map(
+          (post: { likes: any; dislikes: any }) => ({
+            ...post,
+            likes: post.likes || 0,
+            dislikes: post.dislikes || 0,
+          })
+        );
+
+        dispatch({ type: "SET_POSTS", payload: updatedPosts });
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
     };
+
     fetchPosts();
   }, [dispatch]);
 

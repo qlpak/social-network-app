@@ -14,6 +14,7 @@ import {
 } from "../models/Like.js";
 import { tagUserInPost, getTagsForPost } from "../models/Tag.js";
 import { getUserById } from "../models/User.js";
+import { getPostById } from "../models/Post.js";
 
 const router = express.Router();
 
@@ -59,12 +60,28 @@ router.get("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { userId, content } = req.body;
+
+  const post = await getPostById(req.params.id);
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  if (post.user_id !== userId) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
   const updatedPost = await updatePost(req.params.id, userId, content);
   res.json(updatedPost);
 });
 
 router.delete("/:id", async (req, res) => {
   const { userId } = req.body;
+
+  const post = await getPostById(req.params.id);
+  if (!post) return res.status(404).json({ error: "Post not found" });
+
+  if (post.user_id !== userId) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
   await deletePost(req.params.id, userId);
   res.sendStatus(204);
 });
@@ -105,15 +122,14 @@ router.get("/:id/comments", async (req, res) => {
 });
 
 router.post("/:id/like", async (req, res) => {
-  const { userId } = req.body;
-  const alreadyLiked = await hasUserLikedPost(req.params.id, userId);
+  const { userId, type } = req.body;
 
-  if (alreadyLiked) {
-    return res.status(400).json({ error: "User already liked this post" });
+  if (!["like", "dislike"].includes(type)) {
+    return res.status(400).json({ error: "Invalid type" });
   }
 
-  await likePost(req.params.id, userId);
-  res.sendStatus(200);
+  await likePost(req.params.id, userId, type);
+  res.json({ message: `Post ${type}d successfully` });
 });
 
 router.delete("/:id/unlike", async (req, res) => {
