@@ -15,6 +15,7 @@ interface Comment {
   id: number;
   postId: number;
   content: string;
+  author: string;
 }
 
 interface PostProps {
@@ -25,7 +26,8 @@ interface PostProps {
     image_url?: string;
     likes: number;
     created_at: string;
-    comments: { id: number; content: string }[];
+    author: string;
+    comments: { id: number; content: string; author: string }[];
   };
 }
 
@@ -38,19 +40,19 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const currentUserId = 1;
 
   useEffect(() => {
-    const fetchLikes = async () => {
+    const fetchLikeStatus = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/posts/${post.id}/likes`
+          `http://localhost:3000/api/posts/${post.id}/likes/${currentUserId}`
         );
         const data = await response.json();
-        setLikeCount(data.likes);
+        setHasLiked(data.hasLiked);
       } catch (error) {
-        console.error("Error fetching likes:", error);
+        console.error("Error fetching like status:", error);
       }
     };
 
-    fetchLikes();
+    fetchLikeStatus();
   }, [post.id]);
 
   const handleLikeToggle = async () => {
@@ -123,9 +125,17 @@ const Post: React.FC<PostProps> = ({ post }) => {
             </Button>
           </>
         ) : (
-          <Typography variant="body1">
-            {post.content || "Brak treści"}
-          </Typography>
+          <CardContent>
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#bbb", fontWeight: "bold" }}
+            >
+              {post.author}
+            </Typography>
+            <Typography variant="body1">
+              {post.content || "Brak treści"}
+            </Typography>
+          </CardContent>
         )}
 
         {post.image_url && (

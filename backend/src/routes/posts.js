@@ -13,19 +13,48 @@ import {
   hasUserLikedPost,
 } from "../models/Like.js";
 import { tagUserInPost, getTagsForPost } from "../models/Tag.js";
+import { getUserById } from "../models/User.js";
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { userId, content, imageUrl } = req.body;
-  const post = await createPost(userId, content, imageUrl);
-  res.json(post);
+  try {
+    const { userId, content, imageUrl } = req.body;
+    if (!userId || !content) {
+      return res
+        .status(400)
+        .json({ error: "User ID and content are required" });
+    }
+
+    const post = await createPost(userId, content, imageUrl);
+    res.json(post);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.get("/", async (req, res) => {
-  const posts = await getAllPosts();
-  //   console.log("Backend: posts fetched:", posts);
-  res.json(posts);
+  try {
+    const posts = await getAllPosts();
+
+    const postsWithAuthors = await Promise.all(
+      posts.map(async (post) => {
+        const user = await getUserById(post.user_id);
+        const likes = await getPostLikes(post.id);
+        return {
+          ...post,
+          likes,
+          author: user ? `${user.first_name} ${user.last_name}` : "Unknown",
+        };
+      })
+    );
+
+    res.json(postsWithAuthors);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.put("/:id", async (req, res) => {
@@ -55,8 +84,24 @@ router.post("/:id/comments", async (req, res) => {
 });
 
 router.get("/:id/comments", async (req, res) => {
-  const comments = await getCommentsByPost(req.params.id);
-  res.json(comments);
+  try {
+    const comments = await getCommentsByPost(req.params.id);
+
+    const commentsWithAuthors = await Promise.all(
+      comments.map(async (comment) => {
+        const user = await getUserById(comment.user_id);
+        return {
+          ...comment,
+          author: user ? `${user.first_name} ${user.last_name}` : "Unknown",
+        };
+      })
+    );
+
+    res.json(commentsWithAuthors);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.post("/:id/like", async (req, res) => {
@@ -98,6 +143,17 @@ router.post("/:id/tag", async (req, res) => {
 router.get("/:id/tags", async (req, res) => {
   const tags = await getTagsForPost(req.params.id);
   res.json(tags);
+});
+
+router.get("/:id/likes/:userId", async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+    const hasLiked = await hasUserLikedPost(id, userId);
+    res.json({ hasLiked });
+  } catch (error) {
+    console.error("Error checking like status:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 export default router;

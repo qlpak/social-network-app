@@ -11,6 +11,7 @@ import { getPosts } from "../services/apiClient";
 interface Comment {
   id: number;
   content: string;
+  author: string;
 }
 
 interface Post {
@@ -20,7 +21,9 @@ interface Post {
   image_url?: string;
   created_at: string;
   likes: number;
-  comments: { id: number; content: string }[];
+  comments: Comment[];
+  hasLiked?: boolean;
+  author: string;
 }
 
 type Action =
@@ -32,7 +35,7 @@ type Action =
   | { type: "UNLIKE_POST"; payload: { postId: number; likes: number } }
   | {
       type: "ADD_COMMENT";
-      payload: { postId: number; id: number; content: string };
+      payload: { postId: number; id: number; content: string; author: string };
     };
 
 const postReducer = (state: Post[], action: Action): Post[] => {
@@ -40,9 +43,20 @@ const postReducer = (state: Post[], action: Action): Post[] => {
     case "SET_POSTS":
       return action.payload.map((post) => ({
         ...post,
-        comments: Array.isArray(post.comments) ? post.comments : [],
+        comments: Array.isArray(post.comments)
+          ? post.comments.map((comment: Comment) => ({
+              ...comment,
+              author: comment.author || "Unknown",
+            }))
+          : [],
+
         likes: post.likes || 0,
+        hasLiked: post.hasLiked ?? false,
+        author: post.author || "Unknown",
       }));
+
+    case "ADD_POST":
+      return [...state, action.payload];
 
     case "ADD_COMMENT":
       return state.map((post) =>
@@ -52,8 +66,9 @@ const postReducer = (state: Post[], action: Action): Post[] => {
               comments: [
                 ...post.comments,
                 {
-                  id: action.payload.id || Date.now(), // Jeśli brak ID, generujemy nowe
+                  id: action.payload.id || Date.now(),
                   content: action.payload.content,
+                  author: action.payload.author || "Unknown",
                 },
               ],
             }
@@ -90,25 +105,43 @@ export const PostProvider = ({ children }: { children: ReactNode }) => {
     const fetchPosts = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/posts");
+        if (!response.ok) throw new Error("Failed to fetch posts");
+
         const fetchedPosts = await response.json();
 
         const processedPosts = await Promise.all(
           fetchedPosts.map(async (post: Post) => {
-            const commentsResponse = await fetch(
-              `http://localhost:3000/api/posts/${post.id}/comments`
-            );
-            const comments = await commentsResponse.json();
+            try {
+              const commentsResponse = await fetch(
+                `http://localhost:3000/api/posts/${post.id}/comments`
+              );
+              const comments = commentsResponse.ok
+                ? await commentsResponse.json()
+                : [];
 
-            const likesResponse = await fetch(
-              `http://localhost:3000/api/posts/${post.id}/likes`
-            );
-            const likesData = await likesResponse.json();
+              const likesResponse = await fetch(
+                `http://localhost:3000/api/posts/${post.id}/likes`
+              );
+              const likesData = likesResponse.ok
+                ? await likesResponse.json()
+                : { likes: 0 };
 
-            return {
-              ...post,
-              comments: Array.isArray(comments) ? comments : [],
-              likes: likesData.likes || 0,
-            };
+              return {
+                ...post,
+                comments: (comments || []).map((comment: Comment) => ({
+                  ...comment,
+                  author: comment.author || "Unknown",
+                })),
+                likes: likesData.likes || 0,
+                author: post.author || "Unknown",
+              };
+            } catch (err) {
+              console.error(
+                `Error fetching comments or likes for post ${post.id}:`,
+                err
+              );
+              return { ...post, comments: [], likes: 0, author: "Unknown" };
+            }
           })
         );
 

@@ -15,8 +15,14 @@ export const createComment = async (postId, userId, content) => {
 
 export const getCommentsByPost = async (postId) => {
   const result = await pool.query(
-    "SELECT * FROM comments WHERE post_id = $1 ORDER BY created_at ASC",
+    `SELECT comments.*, users.first_name, users.last_name 
+       FROM comments 
+       JOIN users ON users.id = comments.user_id
+       WHERE post_id = $1 ORDER BY created_at ASC`,
     [postId]
   );
-  return result.rows;
+  return result.rows.map((comment) => ({
+    ...comment,
+    author: `${comment.first_name} ${comment.last_name}`,
+  }));
 };

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { usePostContext } from "../context/PostContext";
-import { TextField, Button, Box } from "@mui/material";
+import { TextField, Button, Box, Typography } from "@mui/material";
 
 interface Comment {
   id: number;
   content: string;
+  author: string;
 }
 
 interface CommentsProps {
@@ -25,7 +26,12 @@ const Comments: React.FC<CommentsProps> = ({ postId, comments = [] }) => {
             `http://localhost:3000/api/posts/${postId}/comments`
           );
           const fetchedComments = await response.json();
-          setLoadedComments(fetchedComments);
+          setLoadedComments(
+            fetchedComments.map((comment: any) => ({
+              ...comment,
+              author: comment.author || "Unknown",
+            }))
+          );
         } catch (error) {
           console.error("Error fetching comments:", error);
         }
@@ -56,7 +62,12 @@ const Comments: React.FC<CommentsProps> = ({ postId, comments = [] }) => {
       setLoadedComments((prev) => [...prev, newComment]);
       dispatch({
         type: "ADD_COMMENT",
-        payload: { postId, id: newComment.id, content: newComment.content },
+        payload: {
+          postId,
+          id: newComment.id,
+          content: newComment.content,
+          author: newComment.author || "Unknown",
+        },
       });
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -79,6 +90,12 @@ const Comments: React.FC<CommentsProps> = ({ postId, comments = [] }) => {
               my: 1,
             }}
           >
+            <Typography
+              variant="subtitle2"
+              sx={{ color: "#bbb", fontWeight: "bold" }}
+            >
+              {c.author}
+            </Typography>
             <p>{c.content}</p>
           </Box>
         ))
