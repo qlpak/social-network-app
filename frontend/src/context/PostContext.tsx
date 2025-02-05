@@ -28,30 +28,22 @@ type Action =
   | { type: "ADD_POST"; payload: Post }
   | { type: "UPDATE_POST"; payload: Post }
   | { type: "DELETE_POST"; payload: number }
-  | { type: "LIKE_POST"; payload: number }
-  | { type: "ADD_COMMENT"; payload: { postId: number; content: string } };
+  | { type: "LIKE_POST"; payload: { postId: number; likes: number } }
+  | { type: "UNLIKE_POST"; payload: { postId: number; likes: number } }
+  | {
+      type: "ADD_COMMENT";
+      payload: { postId: number; id: number; content: string };
+    };
 
 const postReducer = (state: Post[], action: Action): Post[] => {
   switch (action.type) {
     case "SET_POSTS":
-      return action.payload;
-    case "ADD_POST":
-      return [
-        {
-          ...action.payload,
-          image_url: action.payload.image_url || "",
-          created_at: new Date().toISOString(),
-          likes: 0,
-          comments: [],
-        },
-        ...state,
-      ];
-    case "UPDATE_POST":
-      return state.map((post) =>
-        post.id === action.payload.id ? action.payload : post
-      );
-    case "DELETE_POST":
-      return state.filter((post) => post.id !== action.payload);
+      return action.payload.map((post) => ({
+        ...post,
+        comments: Array.isArray(post.comments) ? post.comments : [],
+        likes: post.likes || 0,
+      }));
+
     case "ADD_COMMENT":
       return state.map((post) =>
         post.id === action.payload.postId
@@ -59,15 +51,29 @@ const postReducer = (state: Post[], action: Action): Post[] => {
               ...post,
               comments: [
                 ...post.comments,
-                { id: Date.now(), content: action.payload.content },
+                {
+                  id: action.payload.id || Date.now(), // Jeśli brak ID, generujemy nowe
+                  content: action.payload.content,
+                },
               ],
             }
           : post
       );
+
     case "LIKE_POST":
       return state.map((post) =>
-        post.id === action.payload ? { ...post, likes: post.likes + 1 } : post
+        post.id === action.payload.postId
+          ? { ...post, likes: action.payload.likes }
+          : post
       );
+
+    case "UNLIKE_POST":
+      return state.map((post) =>
+        post.id === action.payload.postId
+          ? { ...post, likes: action.payload.likes }
+          : post
+      );
+
     default:
       return state;
   }
@@ -83,17 +89,35 @@ export const PostProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const fetchedPosts = await getPosts();
-        const processedPosts = fetchedPosts.map((post: Post) => ({
-          ...post,
-          comments: Array.isArray(post.comments) ? post.comments : [],
-          content: post.content || "Brak treści",
-        }));
+        const response = await fetch("http://localhost:3000/api/posts");
+        const fetchedPosts = await response.json();
+
+        const processedPosts = await Promise.all(
+          fetchedPosts.map(async (post: Post) => {
+            const commentsResponse = await fetch(
+              `http://localhost:3000/api/posts/${post.id}/comments`
+            );
+            const comments = await commentsResponse.json();
+
+            const likesResponse = await fetch(
+              `http://localhost:3000/api/posts/${post.id}/likes`
+            );
+            const likesData = await likesResponse.json();
+
+            return {
+              ...post,
+              comments: Array.isArray(comments) ? comments : [],
+              likes: likesData.likes || 0,
+            };
+          })
+        );
+
         dispatch({ type: "SET_POSTS", payload: processedPosts });
       } catch (error) {
-        console.error("error fetching posts:", error);
+        console.error("Error fetching posts:", error);
       }
     };
+
     fetchPosts();
   }, []);
 

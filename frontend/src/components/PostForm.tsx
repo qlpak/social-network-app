@@ -1,10 +1,10 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { usePosts } from "../hooks/usePosts";
+import { usePostContext } from "../context/PostContext";
 
 const PostForm = () => {
-  const { addPost } = usePosts();
+  const { dispatch } = usePostContext();
   const userId = 1;
 
   return (
@@ -13,29 +13,43 @@ const PostForm = () => {
       validationSchema={Yup.object({
         content: Yup.string().required("Post content is required"),
       })}
-      onSubmit={(values, { resetForm }) => {
-        const userId = 1;
-        addPost(userId, values.content, values.imageUrl);
-        resetForm({ values: { content: "", imageUrl: "" } });
+      onSubmit={async (values, { resetForm }) => {
+        try {
+          const response = await fetch("http://localhost:3000/api/posts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, ...values }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create post");
+          }
+
+          const newPost = await response.json();
+          dispatch({ type: "ADD_POST", payload: newPost });
+          resetForm({ values: { content: "", imageUrl: "" } });
+        } catch (error) {
+          console.error("Error creating post:", error);
+        }
       }}
     >
-      <Form className="bg-white p-4 shadow-md rounded-lg">
+      <Form className="bg-gray-900 text-white p-4 shadow-md rounded-lg">
         <Field
           name="content"
           as="textarea"
           placeholder="What's on your mind?"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded bg-gray-800 text-white"
         />
         <ErrorMessage name="content" component="div" className="text-red-500" />
         <Field
           name="imageUrl"
           type="text"
           placeholder="Image URL (optional)"
-          className="w-full p-2 border rounded mt-2"
+          className="w-full p-2 border rounded mt-2 bg-gray-800 text-white"
         />
         <button
           type="submit"
-          className="mt-2 p-2 bg-blue-500 text-white rounded"
+          className="mt-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
           Post
         </button>

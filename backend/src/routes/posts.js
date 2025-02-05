@@ -6,7 +6,12 @@ import {
   updatePost,
 } from "../models/Post.js";
 import { createComment, getCommentsByPost } from "../models/Comment.js";
-import { likePost, unlikePost, getPostLikes } from "../models/Like.js";
+import {
+  likePost,
+  unlikePost,
+  getPostLikes,
+  hasUserLikedPost,
+} from "../models/Like.js";
 import { tagUserInPost, getTagsForPost } from "../models/Tag.js";
 
 const router = express.Router();
@@ -36,9 +41,17 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.post("/:id/comments", async (req, res) => {
-  const { userId, content } = req.body;
-  const comment = await createComment(req.params.id, userId, content);
-  res.json(comment);
+  try {
+    const { userId, content } = req.body;
+    if (!userId || !content) {
+      return res.status(400).json({ error: "Missing userId or content" });
+    }
+    const comment = await createComment(req.params.id, userId, content);
+    res.json(comment);
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.get("/:id/comments", async (req, res) => {

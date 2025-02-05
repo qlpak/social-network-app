@@ -1,9 +1,16 @@
+import pool from "../config/database.js";
+
 export const createComment = async (postId, userId, content) => {
-  const result = await pool.query(
-    "INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING *",
-    [postId, userId, content]
-  );
-  return result.rows[0];
+  try {
+    const result = await pool.query(
+      "INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING *",
+      [postId, userId, content]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error inserting comment:", error);
+    throw error;
+  }
 };
 
 export const getCommentsByPost = async (postId) => {

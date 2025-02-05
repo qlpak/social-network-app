@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { usePostContext } from "../context/PostContext";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  IconButton,
+  TextField,
+} from "@mui/material";
+import { Favorite, FavoriteBorder, Edit, Delete } from "@mui/icons-material";
+
+interface Comment {
+  id: number;
+  postId: number;
+  content: string;
+}
 
 interface PostProps {
   post: {
@@ -8,6 +24,8 @@ interface PostProps {
     content: string;
     image_url?: string;
     likes: number;
+    created_at: string;
+    comments: { id: number; content: string }[];
   };
 }
 
@@ -16,109 +34,133 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const [editing, setEditing] = useState(false);
   const [newContent, setNewContent] = useState(post.content);
   const [hasLiked, setHasLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likes);
   const currentUserId = 1;
 
   useEffect(() => {
-    console.log(`Fetching likes for post ID: ${post.id}`);
-    fetch(`http://localhost:3000/api/posts/${post.id}/likes`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Likes data:", data);
-        setHasLiked(data.likes > 0);
-      })
-      .catch((err) => console.error("Error fetching likes:", err));
+    const fetchLikes = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/posts/${post.id}/likes`
+        );
+        const data = await response.json();
+        setLikeCount(data.likes);
+      } catch (error) {
+        console.error("Error fetching likes:", error);
+      }
+    };
+
+    fetchLikes();
   }, [post.id]);
 
-  const handleLikeToggle = () => {
-    if (hasLiked) {
-      fetch(`/api/posts/${post.id}/unlike`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId }),
-      })
-        .then(() => {
-          dispatch({ type: "LIKE_POST", payload: post.id });
-          setHasLiked(false);
-        })
-        .catch((err) => console.error("Error unliking post:", err));
-    } else {
-      fetch(`/api/posts/${post.id}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId }),
-      })
-        .then(() => {
-          dispatch({ type: "LIKE_POST", payload: post.id });
-          setHasLiked(true);
-        })
-        .catch((err) => console.error("Error liking post:", err));
+  const handleLikeToggle = async () => {
+    try {
+      if (hasLiked) {
+        await fetch(`http://localhost:3000/api/posts/${post.id}/unlike`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUserId }),
+        });
+        setLikeCount((prev) => Math.max(prev - 1, 0));
+      } else {
+        await fetch(`http://localhost:3000/api/posts/${post.id}/like`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUserId }),
+        });
+        setLikeCount((prev) => prev + 1);
+      }
+      setHasLiked(!hasLiked);
+    } catch (err) {
+      console.error("Error toggling like:", err);
     }
   };
 
-  const handleSave = () => {
-    dispatch({
-      type: "UPDATE_POST",
-      payload: {
-        id: post.id,
-        user_id: post.user_id,
-        content: newContent,
-        image_url: post.image_url || "",
-        likes: post.likes,
-        comments: [],
-        created_at: new Date().toISOString(),
-      },
-    });
+  const handleDelete = async () => {
+    if (post.user_id !== currentUserId) return;
+    try {
+      await fetch(`http://localhost:3000/api/posts/${post.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      });
+      dispatch({ type: "DELETE_POST", payload: post.id });
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+
+  const handleUpdate = () => {
+    if (post.user_id !== currentUserId) return;
+    const updatedPost = { ...post, content: newContent };
+    dispatch({ type: "UPDATE_POST", payload: updatedPost });
     setEditing(false);
   };
 
   return (
-    <div className="bg-white p-4 shadow rounded-lg">
-      {editing ? (
-        <>
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            className="w-full p-2 border rounded"
+    <Card
+      sx={{
+        backgroundColor: "#1e1e1e",
+        color: "#fff",
+        borderRadius: 2,
+        boxShadow: 3,
+        mb: 2,
+      }}
+    >
+      <CardContent>
+        {editing ? (
+          <>
+            <TextField
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              fullWidth
+              multiline
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
+            <Button onClick={handleUpdate} variant="contained" color="success">
+              Zapisz
+            </Button>
+          </>
+        ) : (
+          <Typography variant="body1">
+            {post.content || "Brak treści"}
+          </Typography>
+        )}
+
+        {post.image_url && (
+          <CardMedia
+            component="img"
+            image={post.image_url}
+            alt="Post Image"
+            sx={{ mt: 2, borderRadius: 1 }}
           />
-          <button
-            onClick={handleSave}
-            className="mt-2 p-2 bg-green-500 text-white rounded"
+        )}
+
+        <div className="flex space-x-4 mt-2">
+          <IconButton
+            onClick={handleLikeToggle}
+            color={hasLiked ? "error" : "default"}
           >
-            Save
-          </button>
-        </>
-      ) : (
-        <p>{post.content ? post.content : "Brak treści"}</p>
-      )}
+            {hasLiked ? <Favorite /> : <FavoriteBorder />}
+          </IconButton>
+          <Typography variant="body2" sx={{ color: "#ccc" }}>
+            {likeCount}
+          </Typography>
 
-      {post.image_url && (
-        <img src={post.image_url} alt="Post" className="w-full mt-2 rounded" />
-      )}
-
-      <div className="flex space-x-4 mt-2">
-        <button
-          onClick={handleLikeToggle}
-          className={`p-2 ${hasLiked ? "bg-red-500" : "bg-blue-500"} text-white rounded`}
-        >
-          👍 {hasLiked ? "Unlike" : "Like"} ({post.likes})
-        </button>
-        <button
-          onClick={() => setEditing(!editing)}
-          className="p-2 bg-yellow-500 text-white rounded"
-        >
-          🖍️ Edit
-        </button>
-        <button
-          onClick={() => dispatch({ type: "DELETE_POST", payload: post.id })}
-          className="p-2 bg-red-500 text-white rounded"
-        >
-          ❌ Delete
-        </button>
-      </div>
-    </div>
+          {post.user_id === currentUserId && (
+            <>
+              <IconButton onClick={() => setEditing(!editing)} color="warning">
+                <Edit />
+              </IconButton>
+              <IconButton onClick={handleDelete} color="error">
+                <Delete />
+              </IconButton>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
