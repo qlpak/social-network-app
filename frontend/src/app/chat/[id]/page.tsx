@@ -8,7 +8,6 @@ import { io } from "socket.io-client";
 const ChatPage = () => {
   const params = useParams();
   const [myUserId, setMyUserId] = useState<number | null>(null);
-  const chatUserId = Number(params?.id);
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
   const socket = useRef(
@@ -22,8 +21,22 @@ const ChatPage = () => {
     }
   }, []);
 
+  const chatId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  if (!chatId) {
+    console.error("error: id wrong", params?.id);
+    return <p>Error: Invalid chat room.</p>;
+  }
+
+  const chatIdParts = chatId.split("_").map(Number);
+  if (chatIdParts.length !== 2) {
+    console.error("error: wrong id in url", chatId);
+    return <p>Error: Invalid chat room.</p>;
+  }
+
+  const chatUserId = chatIdParts.find((id) => id !== myUserId);
+
   useEffect(() => {
-    if (!myUserId || !chatUserId || myUserId === chatUserId) return;
+    if (!myUserId || !chatUserId) return;
 
     const chatRoom = `chat_${Math.min(myUserId, chatUserId)}_${Math.max(myUserId, chatUserId)}`;
     socket.current.emit("joinRoom", {
@@ -33,29 +46,28 @@ const ChatPage = () => {
 
     console.log("🔗 Dołączono do pokoju:", chatRoom);
 
-    const fetchMessages = async () => {
-      const response = await getMessages(chatUserId);
-      setMessages(response.data);
-    };
-
-    fetchMessages();
-
     const messageListener = (newMessage: any) => {
-      console.log("📩 Otrzymano wiadomość z Socket.io:", newMessage);
       if (!newMessage) return;
-      setMessages((prev) => [...prev, newMessage]);
+
+      setMessages((prev) => {
+        const messageExists = prev.some((msg) => msg.id === newMessage.id);
+        return messageExists ? prev : [...prev, newMessage];
+      });
     };
 
+    socket.current.off("receiveMessage");
     socket.current.on("receiveMessage", messageListener);
 
     return () => {
-      console.log("disonnected from the room", chatRoom);
       socket.current.off("receiveMessage", messageListener);
     };
   }, [myUserId, chatUserId]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !myUserId) return;
+    if (!message.trim() || !myUserId || !chatUserId) {
+      console.error("error cant send a message - no id users");
+      return;
+    }
 
     const newMessage = {
       sender_id: myUserId,
@@ -63,22 +75,20 @@ const ChatPage = () => {
       content: message,
     };
 
-    console.log("sending message: ", newMessage);
+    console.log("🚀 Wysyłanie wiadomości:", newMessage);
 
     try {
       const response = await sendMessage(
         newMessage.receiver_id,
         newMessage.content
       );
-      console.log("api response: ", response.data);
+      console.log("api response:", response.data);
 
       if (response.data) {
         socket.current.emit("sendMessage", response.data);
-        console.log("sent through scoket.io: ", response.data);
-        setMessages((prev) => [...prev, response.data]);
       }
     } catch (error) {
-      console.error("errorn seindign message: ", error);
+      console.error("error sending messsage: ", error);
     }
 
     setMessage("");
@@ -91,7 +101,7 @@ const ChatPage = () => {
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4">Chat with User {chatUserId}</h1>
-      <div className="border bg-gray-800 p-4 w-full max-w-lg h-96 overflow-y-auto rounded-lg shadow-md flex flex-col-reverse">
+      <div className="border bg-gray-800 p-4 w-full max-w-lg h-96 overflow-y-auto rounded-lg shadow-md flex flex-col">
         {messages.map((msg, index) => (
           <div
             key={index}

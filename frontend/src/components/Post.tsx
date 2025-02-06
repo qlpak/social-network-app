@@ -10,6 +10,7 @@ import {
   TextField,
 } from "@mui/material";
 import { Favorite, FavoriteBorder, Edit, Delete } from "@mui/icons-material";
+import TagUser from "./TagUser";
 
 interface Comment {
   id: number;
@@ -38,6 +39,22 @@ const Post: React.FC<PostProps> = ({ post }) => {
   const [hasLiked, setHasLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
   const currentUserId = Number(sessionStorage.getItem("userId"));
+  const [tags, setTags] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/posts/${post.id}/tags`
+        );
+        const data = await response.json();
+        setTags(data);
+      } catch (error) {
+        console.error("Error fetching tags:", error);
+      }
+    };
+    fetchTags();
+  }, [post.id]);
 
   useEffect(() => {
     const fetchLikeStatus = async () => {
@@ -123,7 +140,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
       );
 
       if (response.status === 403) {
-        alert("Nie masz uprawnień do edycji tego posta!"); // 🚨 Powiadomienie dla użytkownika
+        alert("Nie masz uprawnień do edycji tego posta!");
         return;
       }
 
@@ -175,7 +192,6 @@ const Post: React.FC<PostProps> = ({ post }) => {
             </Typography>
           </CardContent>
         )}
-
         {post.image_url && (
           <CardMedia
             component="img"
@@ -184,7 +200,19 @@ const Post: React.FC<PostProps> = ({ post }) => {
             sx={{ mt: 2, borderRadius: 1 }}
           />
         )}
-
+        {/* {tags.length > 0 && (
+          <div className="mt-2">
+            <Typography variant="subtitle2" sx={{ color: "#bbb" }}>
+              Tagged:
+            </Typography>
+            {tags.map((tag) => (
+              <span key={tag.id} className="text-blue-400 mx-1">
+                @{tag.user_id}
+              </span>
+            ))}
+          </div>
+        )} */}
+        {/* <TagUser postId={post.id} onTagAdded={() => setTags([...tags])} /> */}
         <div className="flex space-x-4 mt-2">
           <IconButton
             onClick={handleLikeToggle}

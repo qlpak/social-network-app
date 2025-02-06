@@ -1,3 +1,4 @@
+import pool from "../config/database.js";
 export const tagUserInPost = async (postId, userId) => {
   await pool.query(
     "INSERT INTO tags (post_id, user_id) VALUES ($1, $2) RETURNING *",

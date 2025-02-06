@@ -57,7 +57,13 @@ const Dashboard = () => {
                 Add Friend
               </button>
               <button
-                onClick={() => router.push(`/chat/${user.id}`)}
+                onClick={() => {
+                  const myUserId = Number(sessionStorage.getItem("userId"));
+                  if (!myUserId || myUserId === user.id) return;
+
+                  const chatId = `${Math.min(myUserId, user.id)}_${Math.max(myUserId, user.id)}`;
+                  router.push(`/chat/${chatId}`);
+                }}
                 className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition font-medium"
               >
                 Chat
@@ -79,7 +85,7 @@ const Dashboard = () => {
               onClick={() => setIsSearching(false)}
               className="p-2 bg-gray-500 text-white rounded mt-4"
             >
-              🔙 Back to Posts
+              Back to Posts
             </button>
           )}
         </div>
